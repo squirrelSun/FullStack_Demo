@@ -1,0 +1,421 @@
+DQL语言（数据查询）
+	查询列表可以为：表中的字段、常量值、表达式、函数
+	查询结构为虚拟表
+
+	基础查询--select  查询列表  from  表名;
+		查询开始前启用库名
+			use employees; 
+		显示表结构
+			desc employees;
+		查询单个/多个/所有字段
+			select lest_name from employees; 
+			select lest_name,salary,email from employees; 
+			select * from employees; 
+		查询常量值
+			select 100;
+			select 'asd';
+		查询表达式
+			select 100%98;
+		查询函数（调用该函数，打印返回值）
+			select version();
+		别名(as/ )
+			select 100%98 as "结果";
+			select 100 "值";\
+		去重(distinct)
+			select distinct deparment_id from employees;
+		+号
+			select 100+90;	两个操作数都为数值型，做加法运算
+			select '123'+10;	其中一方为字符型，试图将字符数值转化成数值型，成功做加法运算，失败则将字符型转换为0做加法运算
+			select null 10;	只要其中一方为null，结果肯定为null
+	
+	条件查询--select 查询列表 from 表名 where 筛选条件
+		按条件表达式筛选(条件运算符	>  <  =  !=--<>  >=  <= )
+			select * from employees where salary>12000;
+			select last_name,department_id from employees where deoartment_id<>90;
+		按逻辑表达式筛选(逻辑运算符	&&--and  ||--or  ！！--not)
+			select last_name,salary,commission_pct from employees where salary>=10000 and salary<=20000;
+			select * from employees where department_id<90 or department_id>110 or salary>15000;
+		模糊查询(like / between and / in / is (not) null)
+			select * from employees where last_name like '%a%';			%--任意多个字符			
+			select last_name,salary from employees where last_name like '__e_a%';		_--任意单个字符
+			select last_name,salary from employees where last_name like '%/_%' escape '/';		标记符
+			select * from employees where employees_id between 100 and 120;		包含临界值
+			select last_name,job_id from employees where jod_id in('IT_PROT','AD_VP','AD_PRES');	用于打印某字段的值是in列表（值类型必须统一或兼容）里的某一项，不支持通配符
+			select lat_name,commission_pct from employees where commission_pct is null;	null不能用=判断
+			select lat_name,commission_pct from employees where commission_pct is not null;
+		安全等于<=>，可查询null与常量值
+			select lat_name,commission_pct from employees where commission_pct <=> null;	
+			
+	排序查询--select v (where 查询条件) order by 排序列表 (asc 升序/ desc 降序)
+		select * from employees order by salary desc;
+		select * from employees where department_id>=90 order by hiredate asd;
+		select last_name,department_id,salary*12*(1+ifnull(commission_pct,0)) 年薪 from employees order by 年薪 desc,last_name asc;
+	
+	分组查询--select 分组函数 ，列(要求出现在group by的后面) from 表名 (where 查询条件) group by 分组的列表 (order by 子句)	查询列表必须特殊，要求是分组函数和group by后出现的字段
+		分组前筛选（数据源为原始表，where）
+		select max(salary),job_id from employees group by job_id;
+		select count(*),location_id from demprtment group by location_id;
+		select avg(salsry),dempartment_id from employees where email like '%a%' group by dempartment_id;
+		select avg(salary),dempartment_id,job_id from employees group by department_id,job_id;
+		添加分组后的筛选（数据源为分组后的虚表，having）
+		select count(*),department_id from employees group by department_id    having   count(*)>2;	
+		select max(salary),job_id from employees where comission_pct is not null group by job_id having max(salary)>12000;
+		select count(*) from employees group by length(last_name) having count(*)>5; 
+
+	连接查询（多表查询）
+		内连接①
+			等值连接(n表连接至少需要n-1个连接条件，结果为多表的交集部分)
+				select name,boyname from boys,beauty where beauty.boyfriend_id=boy.id;
+				select last_name,department_name where employees.department_Id=departments.department_id;
+				select department_name,city from department d,locations l where d.location_id=l.location_id and city like '_o%';
+				select count(*),city from departemts d,locations l where d.location_id=l.location_id group by city;
+				select job_title,count(*) from employees e,jobs,j where e.job_id=j.job_id group by job_title order by count(*) desc;
+			非等值连接
+				select salary,employee_id,grade_level from employees e,grade g where salary between g.lowst_sal and g.higest_sal;
+			自连接
+				select e.employee_id,e.last_name,m.employss_id,m.last_name from employees e,employees m where e.manager_id=m.employee_id;
+		select 查询列表 from 表1 (别名) joinType join 表2 (别名) on 连接条件 where 筛选条件 group by 分组 having 筛选条件 order by 排序列表
+		内连接②(inner)
+			等值连接
+				select last_name,department_name from employees e inner join departments d on e.'department_id'='department_id';
+			非等值连接
+				select salary,grade_level from employees e join job_grades g on e.salary between g.lowest_sal and g.highest_sal;
+			自连接
+				select e.last_name,m.last_name from employees e join employees m on e.manager_id = m.employees_id;
+		外连接
+			左外连接(left outer)
+				select b.name from beatuy b left outer join boys bo on b.boyfrieng_id = bo.id where bo.id is null;
+			右外连接(right outer)
+				select b.name from boys bo right outer join beatuy b on b.boyfrieng_id = bo.id where bo.id is null;
+			全外连接(full outer)
+				selectb.*,bo.* from beauty b full outer join boys bo on b.boyfriend_id = bo.id;
+		交叉连接(cross)
+			select b.*,bo.* from beauty b cross join boys bo;
+	
+	子查询(一个查询语句中可以存在多个子查询)
+		select后——仅支持标量子查询
+			select d.*,(select count(*) from employees where e.department_id = d.department_id)from departments d;
+		from后——支持表子查询
+			select ag_dep.*,g.grade_level from (select avg(salary),department_id from employees group by department_id) ag_dep inner join job_grade g on ag_dep between lowest_sal and highest_sal;
+		where或having后——支持标量子查询、列子查询、行子查询
+			select * from employees where salary > (select salary from employees where last_name = 'Able');
+			select min(salary),department_id from employees group by department_id having min(salary)>(select min(salary) from employees where department_id = 50);
+			select last_name from employees where department_id in (select dietinct department_id from departments where location_id in(1400,1700));
+			select * from employees where (employee_id,salary ) where (select min(employee_id) ,max(salary) from employees);
+		exists后（相关子查询,结果为布尔型0/1）——支持表子查询
+			select exists(select employee_id from employees);
+		标量子查询（结果集为一行一列）
+		列子查询（结果集为一列多行）
+		行子查询（结果集为一行多列）
+		表子查询（结果集为多行多列）
+
+	分页查询--select 查询列表 from 表 joinType join 表 on 连接条件 group by 分组字段 having 分组后的筛选 order by 排序的字段 limit startIndex(要显示条目的起始索引，从0开始),size(要显示的条目个数);
+		select * from employees limit 0,5;
+		select * from employees where commission_pct is not null order by salary desc limit 10;
+
+	联合查询（查询语句1 union 查询语句2 ...，将多条查询结果合并成一个结果）
+			查询结果的列数和每一列的类型与顺序保持一致，自动去重（union all取消去重）
+		select * from employees where email like "%a%" union select * from employees where department_id > 90;
+
+	函数
+		单行函数（处理）
+			字符函数
+				ifnull(查询字段 ，为空替换的字符)，替换null字段
+				concat(需要拼接的字段逗号分隔)， 字符串拼接
+				length(字节名)，获取字节长度
+				upper('')字母大写/lower('')字母小写/initcap('')首字母大写
+				substr('',index)  /  substr('',index,length)截取字符
+				instr('father','son')返回字串在父串中第一次出现的索引
+				trim('')去除空格
+				trim(字符 from '')去除指定的字符
+				trim('$','father')去除父串中左右两端的'$'字符
+				lpad('father',length,'son')用指定的字串左填充指定长度
+				rpad('father',length,'son')用指定的字串右填充指定长度
+				replace('father','old','new')用新字符串替换父串中的指定所有的字符串
+			数学函数
+				round(value) 四舍五入
+				round(value,index)小数点后四舍五入保留index位
+				ceil(value)向上取整，返回大于等于该参数的最小整数
+				floor(value)向下取整，返回小于等于该参数的最大整数
+				truncate(value，index)截断，小数点后保留几位
+				mod(value1,value2)取余，index1取余(%)index2
+			日期函数
+				now()返回当前系统日期加时间
+				curdate()返回当前系统日期，不包含时间
+				cuetime()返回当前时间，不包含日期
+				select year(now())/manthname(now())/...	获取指定的部分年、月、日、小时、分钟、秒
+				str_to_date(string,格式符)将日期格式的字符转换为指定格式的日期		
+					str_to_date('1999-07-16','%Y-%c-%d')
+				date_format(date,格式符)将日期转换为指定格式的字符
+					date_format(now(),'%Y年%m月%d日')
+				datedife(data1,data2)两日期之间的相差的天数，data1-data2
+					格式符：	%Y 四位的年份	%y 最后两位的年份	%m 月份(01,02,...,11,12)	%c 月份(1,2,...,11,22)	%d 日(01,02,...)	%H 小时(20小时制)	%h 小时(12小时制)	%i 分钟(00,01,02,...,59)	%s 秒(00,01,...,59)
+			其他函数
+				version()获取当前版本号
+				database()获取当前数据库
+				user()获取当前用户
+		分组函数（统计），可以和distinct搭配进行运算，和分组函数的字段一同查询一般是group by后的字段
+			sum()求和		支持数值型数据，忽略null值运算
+			avg()平均值	支持数值型数据，忽略null值运算
+			max()最大值	支持任何类型数据，忽略null值运算
+			min()最小值	支持任何类型数据，忽略null值运算
+			count()计数	支持任何类型数据，忽略null值运算
+				count的详细使用
+					count(字段)表中指定字段的个数，效率略慢
+					count(*)表中的总行数，效率适中
+					count(常量值，通常为1)表中的总行数，效率适中
+	
+			
+DML语言（数据操作）
+	数据插入——插入值的顺序和类型与表的定义一致，数量一致
+		insert into 表名(列名,...) values(值,...)	支持插入多行，支持子查询
+		insert into 表名 set 列名=值,列名=值...	只能单体数据插入	
+	数据修改——修改值的类型与表的定义一致
+		修改单表记录
+			update 表名 set 列=值,列=值... where 筛选条件
+		修改多表间记录（级联更新）
+			update 表1 别名,表2 别名 set 列=值... where 筛选条件
+			update 表1 别名 joinType join 表2 别名 on 连接条件 set 列=值 where 筛选条件
+	数据删除——整行数据删除（如果删除的表中有自增长列，delete删除存在返回值之后从断点处增加数据、可以回滚，truncate删除无返回值之后从1增加数据、不能回滚）
+		删除单表记录
+			delete from 表名 where 筛选条件
+			truncate table 表名			整张表删除全部数据
+		删除多表间记录（级联删除）
+			delete 别名 from  表1 别名,表2 别名 where 连接条件 and 筛选条件
+			delete 别名 from  表1 别名 joinType join 表2 别名 on 连接条件 where 筛选条件
+DDL语言（数据定义）
+	库的管理
+		创建
+			create database (if not exists) 库名 (charcter set 字符集);
+		修改库的字符集
+			alter database 库名 charcter set 新字符集;
+		删除
+			drop database (if exists) 库名;
+	表的管理
+		创建
+			create table (if not exists) 表名 (字段名1 类型(长度) 约束,字段名2 类型(长度) 约束,...)
+		修改
+			alter table 表名 change column 旧字段名 新字段名 类型;	修改字段名
+			alter table 表名 modify column 字段名 新类型;		修改字段类型
+			alter table 表名 add column 字段名 类型 (first/after 字段名);	添加字段
+			alter table 表名 drop column 字段名;			删除字段
+			alter table 旧表名 rename to 新表名;			修改表名
+		删除
+			drop table (if exists) 表名;
+		复制（可以跨库，带前缀）
+			create table 新表名 like 旧表名;				仅复制表的全部结构
+			create table 新表名 select * from 旧表名 (where ...);		复制表的全部结构和部分内容
+			create table 新表名 select 字段名 from 旧表名 where 0;	仅复制表的某些字段
+	常见的数据类型--所选择的类型越简单越好，能保存数值的类型越小越好
+		数值型
+			整型	tinyint(1字节)、smallint(2字节)、mediumint(3字节)、int/interger(4字节)、bigint(8字节)
+				无符号关键字（unsigned）,默认为有符号数
+				存在默认长度，代表显示结果的数据宽度（搭配关键字zerofill，自动变为无符号数），不够位数即用0填充
+				若插入的数据超过范围，报out of range异常，默认插入数据为临界值
+			小数	Type(M,D)
+				定点型
+					dec/decimal(M+2字节)
+					最大取值范围于double相同
+				浮点型
+					float(4字节)、double(8字节)
+				后缀可以省略，float/double无默认长度，dec默认长度为(10,0)；M代表整个数的数据长度，D代表小数点后的数据长度，超过范围自动插入临界值
+				定点型精确度较高，货币运算等
+		字符型(串数据)
+			较短的文本		char(M)、varchar(M)
+				M代表所能保存的最大字符数；char默认长度为1，可省略，varchar不可省略
+				char代表固定长度的字符（相对耗费空间，效率较高），varchar代表可变长度的字符
+					enum('','',...)、set('','',...)
+				不分大小写；enum插入枚举数据，set插入集合数据
+			较长的文本		test、blob(较长的二进制数据)
+		日期型	
+			date	4字节，只保存日期
+			time	3字节，只保存时间
+			year	1字节，只保存年份
+			datetime	8字节，保存日期+时间，本地时间（不受时区影响），1000-9999
+			timetemp	4字节，保存日期+时间，实际时间（与时区和版本有关），1970-2038
+			
+			显示当前时区	show variables like 'time_zone';
+			更改时区		set time_zone ='-/+X:00';
+	常见约束——一个字段可以添加多个约束
+			alter table 表名 modify column 字段名 类型 约束;		修改字段约束（列级）
+			alter table 表名 add column 约束(字段名);			修改字段约束（表级）
+			
+		非空约束--not null		保证字段值不能为空
+		默认约束--default		保证该字段有默认值
+		主键约束--primary key	保证字段值非空并且唯一
+		唯一约束--unique		保证字段值唯一，允许最多一个null
+		检查约束--check		保证字段值满足指定条件
+		外键约束--foreign key	保证字段值必须来自于主表的关联字段的值（两表之间的关系）
+
+		列级约束——均支持，但是外键约束无效果
+			字段名 数据类型 约束类型
+		表级约束——除了非空与默认约束，其余均支持
+			constratint 索引名(约束名) 约束类型(字段名)
+		修改约束	alter table 表名 add constratint 索引名(约束名) 约束类型(字段名)
+			级联删除	alter table 表名 add constratint 索引名(约束名) 约束类型(字段名) on delete cascade;	
+			级联置空	alter table 表名 add constratint 索引名(约束名) 约束类型(字段名) on delete set null;/
+
+
+	表示列（自增长列）--不用手动插入值，系统提供默认的序列值，默认从1开始，一个表最多一个，字段必须为key，字段的数据类型为数值型
+		表中字段定义末尾添加auto_increment
+			set auto_increment_increment=步长	修改步长
+			set auto_increment_offset=初始值	修改初始值
+
+TCL语言（事务控制）
+	事务的属性：原子性、一致性、隔离性、持久性
+		隐式事务（没有明显的开始和结束的标记）
+		显式事务（存在明显的开始和结束的标记，前提：设置自动提交功能为禁用）
+			创建事务
+			set autocomit=0;	只针对当前会话有效
+			start transaction；
+			事务中的sql语句		语句中的delete语句支持回滚，truncate语句不支持回滚
+			...
+			commit/rollback；	结束事务/回滚
+
+			savepoint 节点名;	设置保存点
+			rollback to 节点名;	回滚至保存点
+	隔离机制：处理数据并发问题（脏读：一个事务读取到了其他事务更新的未提交的数据、不可重复读：一个事务多次读取的值不同、幻读：一个事务读取到了其他事务新插入的未提交的数据）
+		read uncommitted读未提交数据	read commted读已提交数据	repeatable read可重复读	serialzable串行化
+						Oracle默认		MySQL默认
+		查看隔离级别	select @@tx_isolation;
+		设置当前连接的隔离级别	set session transaction level 级别;
+		设置系统全局的隔离级别	set global transaction level 级别;
+
+视图   view（虚表，通过普通表动态生成的数据表，只保存了sql逻辑，不保存查询结果，类似于方法函数）
+	创建视图
+		create view 视图名 as sql逻辑语句;
+	修改视图
+		create or replace 视图名 as sql逻辑语句;
+		alter view 视图名 as sql逻辑语句;
+	删除视图
+		drop view 视图名1,视图名2;
+	调用视图
+		select * from 视图名;
+	查看试图结构
+		desc 视图名;
+		show create view 视图名;
+	更新视图（不修改逻辑，只修改数据）
+		与普通表中数据的增、删、改语法操作相同，但是会影响原始表，大部分视图不允许更新
+	视图权限
+		
+索引   index（）
+	创建索引
+		create index 索引名;
+	修改索引
+		
+	删除索引
+
+	查看索引
+		show index 表名;
+
+变量
+	系统变量：由系统提供，服务器层面
+		全局变量（针对一次服务，每次重启服务将会初始化赋值）、会话变量（针对单次连接）
+		查看系统变量	show veriables;
+			show global/session veriables;		查看全局/会话变量
+			show global/session  like '%***%';	查看满足条件的部分系统变量
+			select @@global/session.系统变量名;	查看指定的全局/会话变量
+		为某个具体的系统变量复制
+			set global/session 系统变量名=值;
+			set @@global/session.系统变量名=值;
+	用户自定义变量
+		用户变量（针对当前会话、连接有效）
+			声明变量	
+				@set 变量名=值;
+				@set 变量名:=值;
+				@select 变量名:=值;
+			更新变量
+				同声明变量，变量名与已有变量名相同
+				select 字段 into @变量名 from 表名;
+			查看变量
+				select @变量名;
+		局部变量（针对定义的begin-end中有效，只能在第一句话定义）
+			声明变量
+				declare 变量名 数据类型;
+				declare 变量名 数据类型 default 值;
+			更新变量
+				set 变量名=值;
+				set 变量名:=值;
+				select 变量名:=值;
+				select 字段 into 变量名 from 表名;
+			查看变量
+				select 变量名;
+
+存储过程与函数（一组预先编译好的SQL语句的集合，类似于方法）
+	创建
+		create procedure 存储过程名(参数列表)			
+		begin
+			存储过程体（一组合法有效的SQL语句）
+		end+结束标记
+		参数列表包含：参数模式  参数名  参数类型
+			参数模式
+				in	该参数可以作为输入参数，形参
+				out	该参数可以作为输出参数，返回值
+				inout	该参数可以作为输入输出参数
+		存储过程体只有一句话，begin-end可以省略；过程体里面每一个语句均添加分号，存储过程的结尾使用delimiter重新设置
+			delimiter 结束标记	（结束标记可以为任何字符）
+	调用
+		call 存储过程名(实参列表)+结束标记
+	删除
+		drop procedure 存储过程名;
+	查看结构
+		show create procedure 存储过程名;
+	
+方法函数
+	创建
+		create function 函数名(参数列表) returns 返回类型
+		begin
+			函数体
+		end
+		参数列表包含：参数名  参数类型
+		函数体包含return语句；函数体只有一句话，begin-end可以省略；函数体里面每一个语句军添加分号，函数的结尾使用delimiter重新设置
+	调用
+		select 函数名(参数列表);
+	删除
+		drop function 函数名;
+	查看结构
+		show create function 函数名;
+
+流程控制
+	顺序结构（程序从上而下依次执行）
+	分支结构（程序从多条路径中选择一条执行）
+		if函数	简单的双分支
+			if(expr1,expr2,expr3)	expr1为真返回expr2的值，为假返回expr3的值
+		case结构（switch-case的效果  或  多重if的效果）
+			①case 判断的字段和表达式		等值判断
+				when 常量1  then  返回的值或语句;
+				when 常量2  then  返回的值或语句;
+				...
+				else  返回的值或语句;
+			end
+			②case 				区间判断
+				when 条件1 then 返回的值或语句;
+				when 条件2 then 返回的值或语句;
+				...
+				else 返回的值或语句;
+			end
+		if结构	多重分支
+			if 条件1 then 语句1;
+			elseif 条件2 then 语句2;
+			...
+			else 语句;
+			end if;	
+	循环结构（程序在满足一定的条件的基础上，重复执行一段代码）
+		while
+			(标签:) while 循环条件 do
+				循环体;
+			end while (标签);
+		loop(模拟简单的死循环)
+			(标签:) loop
+				循环体;
+			end loop (标签);
+		repeat
+			(标签:) repeat
+				循环体;
+			until 结束条件 end repeat·6 (标签);
+		循环控制（跳转语句）
+			iterate
+				结束本次循环，继续进行下一次
+			leave
+				跳出，结束本层循环
+
