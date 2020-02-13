@@ -368,4 +368,204 @@
   			end loop;
 		end;
     
+*********************************************************************************************************
+						游标的使用
+*********************************************************************************************************
+12.1 使用游标(类似于Java中的iterator迭代器)
+
+	要求: 打印出 80 部门的所有的员工的工资:salary: xxx
+ 
+		declare
+  			--1. 定义游标	定义数据类型时，不能使用长度约束
+  			CURSOR salary_cursor IS select salary from employees where department_id = 80;
+  			v_salary employees.salary%type;
+		begin
+ 			--2. 打开游标	不能重复打开同一个游标
+ 			OPEN salary_cursor;
+
+ 			--3. 提取游标
+ 			FETCH salary_cursor INTO v_salary;
+ 
+ 			--4. 对游标进行循环操作: 判断游标中是否有下一条记录
+			while salary_cursor%found loop		Name%found：存在未迭代记录
+      				dbms_output.put_line('salary: ' || v_salary);
+      				FETCH salary_cursor INTO v_salary;
+			end loop;  
+ 
+ 			--5. 关闭游标
+ 			CLOUSE  salary_cursor;
+		end;
+
+12.2 使用游标
+
+	要求: 打印出 80 部门的所有的员工的工资: Xxx 's salary is: xxx
+ 
+		declare
+  			cursor sal_cursor is select salary ,last_name from employees where department_id = 80;
+  			v_sal number(10);
+  			v_name varchar2(20);
+		begin
+  			open sal_cursor;
+  
+  			fetch sal_cursor into v_sal,v_name;
+
+  			while sal_cursor%found loop
+        				dbms_output.put_line(v_name||'`s salary is '||v_sal);
+        				fetch sal_cursor into v_sal,v_name;
+  			end loop;
+
+  			close sal_cursor;
+		end;
+
+13. 使用游标的练习: 
+打印出 manager_id 为 100 的员工的 last_name, email, salary 信息(使用游标, 记录类型)
+	方法一（while循环）
+		declare  
+           			--声明游标    
+           			cursor emp_cursor is select last_name, email, salary from employees where manager_id = 100;
+           
+           			--声明记录类型
+           			type emp_record is record(
+                			name employees.last_name%type,
+                			email employees.email%type,
+                			salary employees.salary%type
+           			);
+           
+           			-- 声明记录类型的变量
+           			v_emp_record emp_record;
+		begin
+           			--打开游标
+           			open emp_cursor;
+           
+           			--提取游标
+           			fetch emp_cursor into v_emp_record;
+           
+           			--对游标进行循环操作
+           			while emp_cursor%found loop
+                  			dbms_output.put_line(v_emp_record.name || ', ' || v_emp_record.email || ', ' || v_emp_record.salary );                
+                  			fetch emp_cursor into v_emp_record;
+           			end loop;
+           
+           			--关闭游标
+           			close emp_cursor;
+		end;
+
+	方法二（for循环）
+		declare
+      			cursor emp_cursor is select last_name, email, salary from employees where manager_id = 100;
+		begin
+      			for c in emp_cursor loop
+          				dbms_output.put_line(c.last_name||','||c.email||','||c.salary);
+      			end loop;
+		end;
+
+14. 利用游标, 调整公司中员工的工资: 
+    	工资范围       调整基数
+    	0 - 5000       5%
+    	5000 - 10000   3%
+    	10000 - 15000  2%
+    	15000 -        1%
+
+		declare
+    			--定义游标
+    			cursor emp_sal_cursor is select salary, employee_id from employees;
     
+    			--定义基数变量
+    			temp number(4, 2);
+    
+    			--定义存放游标值的变量
+    			v_sal employees.salary%type;
+    			v_id employees.employee_id%type;
+		begin
+    			--打开游标
+    			open emp_sal_cursor;
+    
+    			--提取游标
+    			fetch emp_sal_cursor into v_sal, v_id;
+    
+    			--处理游标的循环操作
+    			while emp_sal_cursor%found loop
+          				--判断员工的工资, 执行 update 操作
+          				--dbms_output.put_line(v_id || ': ' || v_sal);
+            
+          				if v_sal <= 5000 then temp := 0.05;
+          				elsif v_sal<= 10000 then temp := 0.03;   
+          				elsif v_sal <= 15000 then temp := 0.02;
+          				else temp := 0.01;
+          				end if;
+          
+          				--dbms_output.put_line(v_id || ': ' || v_sal || ', ' || temp);
+          				update employees set salary = salary * (1 + temp) where employee_id = v_id; 
+                  
+          				fetch emp_sal_cursor into v_sal, v_id;
+    			end loop;
+    			--关闭游标
+    			close emp_sal_cursor;
+		end;
+
+	使用SQL中的 decode 函数
+
+	update employees set salary = salary * (1 + (decode(trunc(salary/5000), 0, 0.05,
+								1, 0.03,
+								2, 0.02,
+								0.01)))
+
+15. 利用游标 for 循环完成 14. 
+
+	declare
+    		--定义游标
+    		cursor emp_sal_cursor is select salary, employee_id id from employees;
+    
+    		--定义基数变量
+    		temp number(4, 2);
+	begin
+    		--处理游标的循环操作
+    		for c in emp_sal_cursor loop
+          			--判断员工的工资, 执行 update 操作
+          			--dbms_output.put_line(v_id || ': ' || v_sal);
+            
+          			if c.salary <= 5000 then temp := 0.05;
+          			elsif c.salary <= 10000 then temp := 0.03;   
+          			elsif c.salary <= 15000 then temp := 0.02;
+          			else temp := 0.01;
+          			end if;
+          
+          			--dbms_output.put_line(v_id || ': ' || v_sal || ', ' || temp);
+          			update employees set salary = salary * (1 + temp) where employee_id = c.id;
+    		end loop;
+	end;
+
+16*. 带参数的游标
+
+	declare
+    		--定义游标
+    		cursor emp_sal_cursor(dept_id number, sal number) is select salary + 1000 sal, employee_id id from employees where department_id = dept_id and salary > sal;
+    
+    		--定义基数变量
+   		 temp number(4, 2);
+	begin
+    		--处理游标的循环操作
+    		for c in emp_sal_cursor(sal => 4000, dept_id => 80) loop
+          			--判断员工的工资, 执行 update 操作
+          			--dbms_output.put_line(c.id || ': ' || c.sal);
+          
+          			if c.sal <= 5000 then temp := 0.05;
+          			elsif c.sal <= 10000 then temp := 0.03;   
+          			elsif c.sal <= 15000 then temp := 0.02;
+          			else temp := 0.01;
+          			end if;
+          
+          			dbms_output.put_line(c.sal || ': ' || c.id || ', ' || temp);
+          			--update employees set salary = salary * (1 + temp) where employee_id = c.id;
+    		end loop;
+	end;
+
+17. 隐式游标: 更新指定员工 salary(涨工资 10)，如果该员工没有找到，则打印”查无此人” 信息
+
+	begin
+         		update employees set salary = salary + 10 where employee_id = 1005;
+         		if sql%notfound then		sql：sql语句返回值
+            			dbms_output.put_line('查无此人!');
+         		end if;
+	end;
+
