@@ -569,3 +569,159 @@
          		end if;
 	end;
 
+
+*********************************************************************************************************
+						异常处理
+*********************************************************************************************************
+[预定义异常]
+	declare
+  		v_sal employees.salary%type;
+	begin
+  		select salary into v_sal from employees where employee_id >100;
+  
+  		dbms_output.put_line(v_sal);
+
+	exception
+  		when Too_many_rows then dbms_output.put_line('输出的行数太多了');
+	end;
+
+	ORACLE错误编号	异常名称
+	ORA-0001	Dup_val_on_index
+	ORA-0051	Timeout-on-resource
+	ORA-0061	Transaction-backde-out
+	ORA-1001	Invalid-CURSOR
+	ORA-1012	Not-logged-on
+	ORA-1017	Login-denied
+	ORA-1403	No_data_found		没有找到数据
+	ORA-1422	Too_many_rows		返回多行
+	ORA-1476	Zero-divide		被零整除
+	ORA-1722	Invaild-NUMBER
+	ORA-6500	Storage-error
+	ORA-6501	Program-error
+	ORA-6502	Value-error
+	ORA-6504	Rowtype-mismatch
+	ORA-6511	CURSOR-already-OPEN
+	ORA-6530	Access-INTO-null
+	ORA-6531	Collection-is-null
+	ORA-6532	Subscript-outside-limit
+	ORA-6533	Subscript-beyond-count
+
+
+	显示错误详情	show errors;
+
+
+[非预定义异常]
+	declare
+  		v_sal employees.salary%type;
+  		--声明一个异常
+  		delete_mgr_excep exception;
+  		--把自定义的异常和oracle的错误关联起来
+  		PRAGMA EXCEPTION_INIT(delete_mgr_excep,-2292);
+	begin
+  		delete from employees where employee_id = 100;
+ 		select salary into v_sal from employees where employee_id >100;
+  		dbms_output.put_line(v_sal);
+	exception
+  		when Too_many_rows then dbms_output.put_line('输出的行数太多了');
+  		when delete_mgr_excep then dbms_output.put_line('Manager不能直接被删除');
+	end;
+
+[用户自定义异常]
+	declare
+  		v_sal employees.salary%type;
+  		--声明一个异常
+  		delete_mgr_excep exception;
+  		--把自定义的异常和oracle的错误关联起来
+  		PRAGMA EXCEPTION_INIT(delete_mgr_excep,-2292);
+  
+  		--声明一个异常
+  		too_high_sal exception;
+
+	begin
+
+  		select salary into v_sal from employees where employee_id =100;
+  		if v_sal > 1000 then
+
+     			RAISE too_high_sal;
+
+  		end if;
+  		delete from employees where employee_id = 100;
+  		dbms_output.put_line(v_sal);
+	exception
+  		when Too_many_rows then dbms_output.put_line('输出的行数太多了');
+  		when delete_mgr_excep then dbms_output.put_line('Manager不能直接被删除');
+  		--处理异常
+  		when too_high_sal then dbms_output.put_line('工资过高了');
+	end;
+
+18. 基本程序: 
+	通过 select ... into ... 查询某人的工资, 若没有查询到, 则输出 "未找到数据"
+
+		declare
+  			--定义一个变量
+  			v_sal employees.salary%type;
+		begin
+  			--使用 select ... into ... 为 v_sal 赋值
+  			select salary into v_sal from employees where employee_id = 1000;
+  			dbms_output.put_line('salary:　' || v_sal);
+		exception
+  			when No_data_found then dbms_output.put_line('未找到数据');
+		end;
+
+	         	或
+
+		declare
+  			--定义一个变量
+  			v_sal employees.salary%type;
+		begin
+  			--使用 select ... into ... 为 v_sal 赋值
+  			select salary into v_sal from employees;
+  			dbms_output.put_line('salary:　' || v_sal);
+		exception
+  			when No_data_found then dbms_output.put_line('未找到数据!');
+  			when Too_many_rows then dbms_output.put_line('数据过多!');     
+		end;
+
+19. 更新指定员工工资，如工资小于300，则加100；对 NO_DATA_FOUND 异常, TOO_MANY_ROWS 进行处理.
+	declare
+   		v_sal employees.salary%type;
+	begin
+   		select salary into v_sal from employees where employee_id = 100;
+   
+   		if(v_sal < 300) then update employees set salary = salary + 100 where employee_id = 100;
+   		else dbms_output.put_line('工资大于300');
+   		end if;
+	exception
+   		when no_data_found then dbms_output.put_line('未找到数据');
+    		when too_many_rows then dbms_output.put_line('输出的数据行太多');
+	end;
+
+20. 处理非预定义的异常处理: "违反完整约束条件"
+	declare
+  		--1. 定义异常	
+  		temp_exception exception;
+ 		 --2. 将其定义好的异常情况，与标准的 ORACLE 错误联系起来，使用 EXCEPTION_INIT 语句
+  		PRAGMA EXCEPTION_INIT(temp_exception, -2292);
+	begin
+  		delete from employees where employee_id = 100;
+	exception
+  		--3. 处理异常
+  		when temp_exception then dbms_output.put_line('违反完整性约束!');
+	end;
+
+21. 自定义异常: 更新指定员工工资，增加100；若该员工不存在则抛出用户自定义异常: no_result
+	declare
+  		--自定义异常                                   
+  		no_result exception;   
+	begin
+  		update employees set salary = salary + 100 where employee_id = 1001;
+
+  		--使用隐式游标, 抛出自定义异常
+  		if sql%notfound then raise no_result;
+  		end if;  
+
+	exception
+  		--处理程序抛出的异常
+  		when no_result then dbms_output.put_line('更新失败');
+	end;
+
