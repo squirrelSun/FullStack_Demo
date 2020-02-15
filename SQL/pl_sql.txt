@@ -725,3 +725,194 @@
   		when no_result then dbms_output.put_line('更新失败');
 	end;
 
+
+*********************************************************************************************************
+					存储函数和过程
+*********************************************************************************************************
+[存储函数：有返回值，创建完成后，通过select function() from dual;执行]
+[存储过程：由于没有返回值，创建完成后，不能使用select语句，只能使用pl/sql块执行]
+
+[格式]
+	--函数的声明(有参数的写在小括号里)
+	create or replace function func_name(v_param varchar2)
+	--返回值类型
+	return varchar2
+	is 
+		--PL/SQL块变量、记录类型、游标的声明(类似于前面的declare的部分)
+	begin
+		--函数体(可以实现增删改查等操作，返回值需要return)
+       		return 'helloworld'|| v_logo;
+	end;
+
+22.1 函数的 helloworld: 返回一个 "helloworld" 的字符串
+
+	create or replace function hello_func
+	return varchar2
+	is
+	begin
+       	return 'helloworld';
+	end;
+
+          执行函数
+
+	begin
+    		dbms_output.put_line(hello_func());
+	end;
+
+	或
+
+	 select hello_func() from dual;
+
+22.2 返回一个"helloworld: atguigu"的字符串，其中atguigu 由执行函数时输入。
+
+	--函数的声明(有参数的写在小括号里)
+	create or replace function hello_func(v_logo varchar2)
+	--返回值类型
+	return varchar2
+	is 
+	--PL/SQL块变量的声明
+	begin
+		--函数体
+       		return 'helloworld'|| v_logo;
+	end;
+
+22.3 创建一个存储函数，返回当前的系统时间
+	create or replace function func1
+	return date
+	is
+		--定义变量
+		v_date date;
+	begin
+		--函数体
+       		select sysdate into v_date from dual;		--v_date := sysdate;
+       		return v_date;
+	end;
+
+          执行函数
+	select func1 from dual;
+	或
+	declare
+  		v_date date;
+	begin
+  		v_date := func1;
+  		dbms_output.put_line(v_date);
+	end;
+
+23. 定义带参数的函数: 两个数相加
+
+	create or replace function add_func(a number, b number)
+	return number
+	is
+	begin
+       		return (a + b);
+	end;
+
+          执行函数
+
+	begin
+    		dbms_output.put_line(add_func(12, 13));
+	end;
+	或
+    	select add_func(12,13) from dual;
+
+24. 定义一个函数: 获取给定部门的工资总和, 要求:部门号定义为参数, 工资总额定义为返回值.
+
+	create or replace function sum_sal(dept_id number)
+       	return number
+       	is
+       		cursor sal_cursor is select salary from employees where department_id = dept_id;
+       		v_sum_sal number(8) := 0;   
+	begin
+       		for c in sal_cursor loop
+           			v_sum_sal := v_sum_sal + c.salary;
+       		end loop;       
+
+       		--dbms_output.put_line('sum salary: ' || v_sum_sal);
+       		return v_sum_sal;
+	end;
+
+          执行函数
+
+	begin
+    		dbms_output.put_line(sum_sal(80));
+	end;
+
+25. 关于 OUT 型的参数: 因为函数只能有一个返回值, PL/SQL 程序可以通过 OUT 型的参数实现有多个返回值
+
+	要求: 定义一个函数: 获取给定部门的工资总和 和 该部门的员工总数(定义为 OUT 类型的参数).
+	要求: 部门号定义为参数, 工资总额定义为返回值.
+
+		create or replace function sum_sal(dept_id number, total_count out number)
+       		return number
+       		is
+       			cursor sal_cursor is select salary from employees where department_id = dept_id;
+       			v_sum_sal number(8) := 0;   
+		begin
+       			total_count := 0;
+
+       			for c in sal_cursor loop
+           				v_sum_sal := v_sum_sal + c.salary;
+           				total_count := total_count + 1;
+       			end loop;       
+
+       			--dbms_output.put_line('sum salary: ' || v_sum_sal);
+       			return v_sum_sal;
+		end;   
+
+	          执行函数:
+
+		delare 
+  			v_total number(3) := 0;
+		begin
+    			dbms_output.put_line(sum_sal(80, v_total));
+    			dbms_output.put_line(v_total);
+		end;
+
+26*. 定义一个存储过程: 获取给定部门的工资总和(通过 out 参数), 要求:部门号和工资总额定义为参数
+
+	create or replace procedure sum_sal_procedure(dept_id number, v_sum_sal out number)
+       	is
+       		cursor sal_cursor is select salary from employees where department_id = dept_id;
+	begin
+       		v_sum_sal := 0;
+       
+       		for c in sal_cursor loop
+           			--dbms_output.put_line(c.salary);
+           			v_sum_sal := v_sum_sal + c.salary;
+       		end loop;       
+
+       		dbms_output.put_line('sum salary: ' || v_sum_sal);
+	end;
+          执行函数
+	declare 
+     		v_sum_sal number(10) := 0;
+	begin
+     		sum_sal_procedure(80,v_sum_sal);
+	end;
+
+27*. 自定义一个存储过程完成以下操作: 
+	对给定部门(作为输入参数)的员工进行加薪操作, 若其到公司的时间在 (? , 95) 期间,    为其加薪 %5
+	                                                               [95 , 98)             %3       
+	                                                               [98, ?)               %1
+	得到以下返回结果: 为此次加薪公司每月需要额外付出多少成本(定义一个 OUT 型的输出参数).
+
+		create or replace procedure add_sal_procedure(dept_id number, temp out number)
+		is
+       			cursor sal_cursor is select employee_id id, hire_date hd, salary sal from employees where department_id = dept_id;
+       			a number(4, 2) := 0;
+		begin
+       			temp := 0;       
+
+       			for c in sal_cursor loop
+           				a := 0;    
+       
+           				if c.hd < to_date('1995-1-1', 'yyyy-mm-dd') then a := 0.05;
+           				elsif c.hd < to_date('1998-1-1', 'yyyy-mm-dd') then a := 0.03;
+           				else a := 0.01;
+           				end if;
+           
+           				temp := temp + c.sal * a;
+           				update employees set salary = salary * (1 + a) where employee_id = c.id;
+       			end loop;       
+		end;
+
