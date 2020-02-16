@@ -916,3 +916,76 @@
        			end loop;       
 		end;
 
+
+*********************************************************************************************************
+						触发器
+*********************************************************************************************************
+一个helloworld级别的触发器
+	create or replace trigger hello_trigger
+	--触发时间，执行后（前）
+	after(before)
+		--触发条件
+		update(delect/insert) on employees
+	--是（否）行级触发
+	--for each row
+	begin
+		--触发时执行的内容 
+    		dbms_output.put_line('hello...');
+		--	:old.	触发前数据	
+		--	:new.	触发后数据
+    		--dbms_output.put_line('old.salary:'|| :OLD.salary||',new.salary'||:NEW.salary);
+	end;
+          执行：update employees set salary = salary + 1000;
+
+28. 触发器的 helloworld: 编写一个触发器, 在向 emp 表中插入记录时, 打印 'helloworld'
+
+	create or replace trigger emp_trigger
+	after 
+		insert on emp
+	for each row
+	begin
+       		dbms_output.put_line('helloworld');
+	end;
+
+29. 行级触发器: 每更新 employees 表中的一条记录, 都会导致触发器执行
+
+	create or replace trigger employees_trigger
+	after 
+		update on employees
+	for each row
+	begin
+       		dbms_output.put_line('修改了一条记录!');
+	end;
+
+29+语句级触发器: 一个 update/delete/insert 语句只使触发器执行一次
+
+	create or replace trigger employees_trigger
+	after 
+		update on employees
+	begin
+       		dbms_output.put_line('修改了一条记录!');
+	end;
+
+30. 使用 :new, :old 修饰符
+
+	create or replace trigger employees_trigger
+	after 
+		update on employees
+	for each row
+	begin
+       		dbms_output.put_line('old salary: ' || :old.salary || ', new salary: ' || :new.salary);
+	end;
+
+31. 编写一个触发器, 在对 my_emp 记录进行删除的时候, 在 my_emp_bak 表中备份对应的记录
+	1). 准备工作:	创建触发表及备份表
+		create table my_emp as select employee_id id, last_name name, salary sal from employees
+		create table my_emp_bak as select employee_id id, last_name name, salary sal from employees where 1 = 2
+
+	2). 触发器
+		create or replace trigger bak_emp_trigger
+       		before 
+			delete on my_emp
+       		for each row
+		begin
+       			insert into my_emp_bak values(:old.id, :old.name, :old.sal);
+		end; 
