@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<net.java.amateras.uml.model.RootModel>
+  <backgroundColor>
+    <red>255</red>
+    <green>255</green>
+    <blue>206</blue>
+  </backgroundColor>
+  <foregroundColor>
+    <red>0</red>
+    <green>0</green>
+    <blue>0</blue>
+  </foregroundColor>
+  <showIcon>true</showIcon>
+  <listeners serialization="custom">
+    <java.beans.PropertyChangeSupport>
+      <default>
+        <source class="net.java.amateras.uml.model.RootModel" reference="../../../.."/>
+        <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+      </default>
+      <null/>
+    </java.beans.PropertyChangeSupport>
+  </listeners>
+  <sourceConnections/>
+  <targetConnections/>
+  <children>
+    <net.java.amateras.uml.model.NoteModel>
+      <backgroundColor>
+        <red>255</red>
+        <green>255</green>
+        <blue>206</blue>
+      </backgroundColor>
+      <foregroundColor>
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+      </foregroundColor>
+      <showIcon>true</showIcon>
+      <parent class="net.java.amateras.uml.model.RootModel">
+        <backgroundColor reference="../../backgroundColor"/>
+        <foregroundColor reference="../../foregroundColor"/>
+        <showIcon>true</showIcon>
+        <listeners serialization="custom">
+          <java.beans.PropertyChangeSupport>
+            <default>
+              <source class="net.java.amateras.uml.model.RootModel" reference="../../../.."/>
+              <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+            </default>
+            <null/>
+          </java.beans.PropertyChangeSupport>
+        </listeners>
+        <sourceConnections/>
+        <targetConnections/>
+        <children>
+          <net.java.amateras.uml.model.NoteModel reference="../../.."/>
+        </children>
+        <filterProperty/>
+      </parent>
+      <listeners serialization="custom">
+        <java.beans.PropertyChangeSupport>
+          <default>
+            <source class="net.java.amateras.uml.model.NoteModel" reference="../../../.."/>
+            <propertyChangeSupportSerializedDataVersion>2</propertyChangeSupportSerializedDataVersion>
+          </default>
+          <null/>
+        </java.beans.PropertyChangeSupport>
+      </listeners>
+      <constraint>
+        <height>351</height>
+        <width>674</width>
+        <x>117</x>
+        <y>108</y>
+      </constraint>
+      <sourceConnections/>
+      <targetConnections/>
+      <children/>
+      <filterProperty/>
+      <content>&#xd;
+适配器模式&#xd;
+	让原本因为接口不匹配不能一起工作的两个类可以协同工作（兼容性）&#xd;
+&#xd;
+类适配器模式&#xd;
+	classAdapter&#xd;
+	以类给到适配器，在Adapter里，将src当作类，继承&#xd;
+&#xd;
+对象适配器模式&#xd;
+	objectAdapter&#xd;
+	以对象给到适配器，在Adapter里，将src作为一个对象，持有&#xd;
+&#xd;
+接口适配器模式(缺省适配器模式)&#xd;
+	interfaceAdapter&#xd;
+	以接口给到适配器，在Adapter里，将src作为一个接口，实现</content>
+      <old>&#xd;
+适配器模式&#xd;
+	让原本因为接口不匹配不能一起工作的两个类可以协同工作（兼容性）&#xd;
+&#xd;
+类适配器模式&#xd;
+	classAdapter&#xd;
+&#xd;
+对象适配器模式&#xd;
+	objectAdapter&#xd;
+&#xd;
+接口适配器模式(缺省适配器模式)&#xd;
+	interfaceAdapter</old>
+    </net.java.amateras.uml.model.NoteModel>
+  </children>
+  <filterProperty/>
+</net.java.amateras.uml.model.RootModel>
