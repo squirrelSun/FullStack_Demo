@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.0.xsd">
+
+	<!-- <bean>配置对象 id:对象的唯一标识 class:此对象所属类的全名 -->
+	<bean id="person1" class="spring.bean.Person">
+		<!-- <property>为对象赋值，根据setXXX赋值 name:属性名 value:属性值 ref：引用当前spring管理的一个bean的id -->
+		<property name="id" value="222"></property>
+		<property name="name" value="qwe"></property>
+	</bean>
+	<bean id="person2" class="spring.bean.Person">
+		<!-- 用构造方法为对象赋值 value：属性值 index：索引，构造器的第几个参数 type：数据类型 -->
+		<constructor-arg value="333"></constructor-arg>
+		<constructor-arg value="zxc"></constructor-arg>
+	</bean>
+	<bean id="person3" class="spring.bean.Person" p:id="444"
+		p:name="iop">
+		<!-- p名称空间直接赋值 -->
+	</bean>
+
+	<bean id="dog" class="spring.bean.Dog">
+		<property name="num" value="123"></property>
+		<property name="dname" value="labuladuo"></property>
+	</bean>
+	<bean id="person4" class="spring.bean.Person">
+		<property name="id" value="444"></property>
+		<property name="name" value="ytr"></property>
+		<property name="dog" ref="dog"></property>
+	</bean>
+	<bean id="person5" class="spring.bean.Person">
+		<property name="id" value="555"></property>
+		<property name="name" value="bnm"></property>
+		<property name="dog" ref="dog"></property>
+		<property name="cls">
+			<list>
+				<value>a</value>
+				<value>b</value>
+				<value>c</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="dog2" class="spring.bean.Dog">
+		<property name="num" value="456"></property>
+		<property name="dname" value="jinmao"></property>
+		<property name="person">
+			<list>
+				<ref bean="person1" />
+				<ref bean="person2" />
+				<ref bean="person3" />
+			</list>
+		</property>
+	</bean>
+	<bean id="dog3" class="spring.bean.Dog">
+		<property name="num" value="789"></property>
+		<property name="dname" value="iashd"></property>
+		<property name="birth">
+			<map>
+				<entry>
+					<key>
+						<value>2020</value>
+					</key>
+					<value>03</value>
+				</entry>
+				<entry>
+					<key>
+						<value>2019</value>
+					</key>
+					<value>02</value>
+				</entry>
+			</map>
+		</property>
+	</bean>
+	<bean id="dog4" class="spring.bean.Dog">
+		<property name="num" value="741"></property>
+		<property name="dname" value="sf"></property>
+		<property name="birth" ref="birth"></property>
+	</bean>
+	<util:map id="birth">
+		<entry>
+			<key>
+				<value>2019</value>
+			</key>
+			<value>02</value>
+		</entry>
+	</util:map>
+
+</beans>
+		
